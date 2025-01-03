@@ -23,6 +23,10 @@
             color: var(--tg-theme-button-text-color, #fff);
             cursor: pointer;
             font-size: 16px;
+            transition: opacity 0.3s;
+        }
+        .button:active {
+            opacity: 0.8;
         }
         .cards {
             margin-top: 20px;
@@ -34,11 +38,25 @@
             padding: 15px;
             border-radius: 8px;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .error {
+            color: var(--tg-theme-text-color, #ff0000);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background-color: var(--tg-theme-secondary-bg-color, #ffebee);
+            display: none;
         }
     </style>
 </head>
 <body>
     <div id="app">
+        <div id="error" class="error"></div>
         <button class="button" onclick="drawCards(1)">Расклад на 1 карту</button>
         <button class="button" onclick="drawCards(3)">Расклад на 3 карты</button>
         <button class="button" onclick="drawCards(5)">Расклад на 5 карт</button>
@@ -47,7 +65,18 @@
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand();
+        
+        // Инициализация Telegram WebApp
+        try {
+            tg.expand();
+            // Проверяем, что WebApp инициализирован корректно
+            if (!tg.initDataUnsafe || !tg.initDataUnsafe.query_id) {
+                console.log('WebApp initialized without proper data');
+            }
+        } catch (e) {
+            console.error('Error initializing WebApp:', e);
+            showError('Ошибка инициализации приложения');
+        }
 
         const cards = [
             "Шут", "Маг", "Верховная Жрица", "Императрица", "Император",
@@ -56,6 +85,15 @@
             "Умеренность", "Дьявол", "Башня", "Звезда", "Луна", "Солнце",
             "Суд", "Мир"
         ];
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -66,24 +104,47 @@
         }
 
         function drawCards(count) {
-            const shuffled = shuffleArray([...cards]);
-            const selected = shuffled.slice(0, count);
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '';
-            
-            selected.forEach((card, index) => {
-                const cardElement = document.createElement('div');
-                cardElement.className = 'card';
-                cardElement.textContent = `${index + 1}. ${card}`;
-                resultDiv.appendChild(cardElement);
-            });
+            try {
+                const shuffled = shuffleArray([...cards]);
+                const selected = shuffled.slice(0, count);
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = '';
+                
+                selected.forEach((card, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'card';
+                    cardElement.textContent = `${index + 1}. ${card}`;
+                    resultDiv.appendChild(cardElement);
+                });
 
-            tg.MainButton.setText('Готово');
-            tg.MainButton.show();
+                if (tg.MainButton) {
+                    tg.MainButton.setText('Готово');
+                    tg.MainButton.show();
+                } else {
+                    showError('Ошибка: кнопка недоступна');
+                }
+            } catch (e) {
+                console.error('Error in drawCards:', e);
+                showError('Произошла ошибка при раскладе карт');
+            }
         }
 
-        tg.MainButton.onClick(() => {
-            tg.close();
+        // Обработчик кнопки "Готово"
+        if (tg.MainButton) {
+            tg.MainButton.onClick(() => {
+                try {
+                    tg.close();
+                } catch (e) {
+                    console.error('Error closing WebApp:', e);
+                    showError('Ошибка при закрытии приложения');
+                }
+            });
+        }
+
+        // Обработка ошибок WebApp
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e);
+            showError('Произошла ошибка в приложении');
         });
     </script>
 </body>
