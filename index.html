@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Таро расклад</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        .button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #fff);
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .cards {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .card {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <button class="button" onclick="drawCards(1)">Расклад на 1 карту</button>
+        <button class="button" onclick="drawCards(3)">Расклад на 3 карты</button>
+        <button class="button" onclick="drawCards(5)">Расклад на 5 карт</button>
+        <div id="result" class="cards"></div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const cards = [
+            "Шут", "Маг", "Верховная Жрица", "Императрица", "Император",
+            "Иерофант", "Влюбленные", "Колесница", "Сила", "Отшельник",
+            "Колесо Фортуны", "Справедливость", "Повешенный", "Смерть",
+            "Умеренность", "Дьявол", "Башня", "Звезда", "Луна", "Солнце",
+            "Суд", "Мир"
+        ];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function drawCards(count) {
+            const shuffled = shuffleArray([...cards]);
+            const selected = shuffled.slice(0, count);
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            
+            selected.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.textContent = `${index + 1}. ${card}`;
+                resultDiv.appendChild(cardElement);
+            });
+
+            tg.MainButton.setText('Готово');
+            tg.MainButton.show();
+        }
+
+        tg.MainButton.onClick(() => {
+            tg.close();
+        });
+    </script>
+</body>
+</html>
